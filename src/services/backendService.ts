@@ -34,13 +34,16 @@ export async function sendDataToBackend(data: SensorData): Promise<void> {
   }
 }
 
-export async function getThresholdsFromBackend(): Promise<{ temperature_max: number, humidity_min: number } | null> {
+export async function getThresholdsFromBackend(): Promise<{ temperature_max: number, humidity_min: number, tank_volume: number, tank_height: number } | null> {
   try {
     const response = await axios.get(THRESHOLDS_ENDPOINT);
     const data = response.data;
+
     return {
       temperature_max: data.temperatureMaxThreshold,
-      humidity_min: data.humidityMinThreshold
+      humidity_min: data.humidityMinThreshold,
+      tank_volume: data.tankMaxVolume,   
+      tank_height: data.tankHeight       
     };
   } catch (error) {
     console.error("Error obteniendo thresholds del backend:", error);
