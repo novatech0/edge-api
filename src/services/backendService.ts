@@ -1,52 +1,75 @@
 import axios from "axios";
 import dotenv from "dotenv";
+
 import {
-  TEMPERATURE_ENDPOINT,
-  HUMIDITY_ENDPOINT,
-  VOLUME_ENDPOINT,
-  THRESHOLDS_ENDPOINT,
-  IOT_DATA_ENDPOINT
+  cropEndpoint,
+  temperatureEndpoint,
+  humidityEndpoint,
+  thresholdsEndpoint,
+  waterTankEndpoint,
+  iotDataEndpoint
 } from "../constants/backend";
+
 import { SensorData } from "../types/sensor";
 
 dotenv.config();
-
-export async function sendDataToBackend(data: SensorData): Promise<void> {
+ 
+export async function sendDataToBackend(
+  data: SensorData,
+  cropId: number,
+  tankId: number
+): Promise<void> {
   try {
-    await axios.patch(TEMPERATURE_ENDPOINT, { temperature: data.temperature });
-    console.log("Temperatura enviada al backend Spring Boot");
+    await axios.patch(temperatureEndpoint(cropId), { temperature: data.temperature });
+    await axios.patch(humidityEndpoint(cropId), { humidity: data.humidity });
+    await axios.patch(waterTankEndpoint(tankId), { waterAmount: data.volume });
 
-    await axios.patch(HUMIDITY_ENDPOINT, { humidity: data.humidity });
-    console.log("Humedad enviada al backend Spring Boot");
-
-    await axios.patch(VOLUME_ENDPOINT, { waterAmount: data.volume });
-    console.log("Volumen enviado al backend Spring Boot");
-
-    await axios.post(IOT_DATA_ENDPOINT, {
+    await axios.post(iotDataEndpoint, {
       temperature: data.temperature,
       humidity: data.humidity,
       volume: data.volume,
       timestamp: data.timestamp,
     });
-    console.log("Datos enviados al nuevo endpoint del backend Spring Boot");
+
+    console.log("Datos enviados correctamente al backend");
   } catch (error) {
     console.error("Error enviando datos al backend:", error);
   }
 }
 
-export async function getThresholdsFromBackend(): Promise<{ temperature_max: number, humidity_min: number, tank_volume: number, tank_height: number } | null> {
+ 
+export async function getThresholdsFromBackend(
+  cropId: number
+): Promise<{
+  temperature_max: number;
+  humidity_min: number;
+  tank_volume: number;
+  tank_height: number;
+} | null> {
   try {
-    const response = await axios.get(THRESHOLDS_ENDPOINT);
+    const response = await axios.get(thresholdsEndpoint(cropId));
     const data = response.data;
 
     return {
       temperature_max: data.temperatureMaxThreshold,
       humidity_min: data.humidityMinThreshold,
-      tank_volume: data.tankMaxVolume,   
-      tank_height: data.tankHeight       
+      tank_volume: data.tankMaxVolume,
+      tank_height: data.tankHeight,
     };
   } catch (error) {
     console.error("Error obteniendo thresholds del backend:", error);
+    return null;
+  }
+}
+ 
+export async function getCropInfo(
+  cropId: number
+): Promise<any | null> {
+  try {
+    const response = await axios.get(cropEndpoint(cropId));
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo info del crop:", error);
     return null;
   }
 }

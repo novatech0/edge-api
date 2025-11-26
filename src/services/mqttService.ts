@@ -27,18 +27,29 @@ export class MqttService {
     });
   };
 
-  private onMessage = async (_topic: string, message: Buffer) => {
-    try {
-      const data = JSON.parse(message.toString());
-      this.latestData = { ...data, timestamp: Date.now() };
-      console.log("Received MQTT data:", this.latestData);
-      if (this.latestData) {
-        await sendDataToBackend(this.latestData);
-      }
-    } catch (e) {
-      console.error("Error parsing MQTT message:", e);
+private onMessage = async (_topic: string, message: Buffer) => {
+  try {
+    const data = JSON.parse(message.toString());
+
+    this.latestData = {
+      ...data,
+      timestamp: Date.now(),
+    };
+
+    console.log("Received MQTT data:", this.latestData);
+
+    if (this.latestData) {
+      const cropId = Number(process.env.CROP_ID) || 1;
+      const tankId = Number(process.env.TANK_ID) || 1;
+
+      await sendDataToBackend(this.latestData, cropId, tankId);
     }
-  };
+
+  } catch (error) {
+    console.error("Error parsing MQTT message:", error);
+  }
+};
+
 
   public getLatestData(): SensorData | null {
     return this.latestData;
