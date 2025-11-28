@@ -1,28 +1,44 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import { cropIotEndpoint } from "../constants/backend";
+import { cropIotEndpoint, thresholdsEndpoint } from "../constants/backend";
 import { SensorData } from "../types/sensor";
 
 dotenv.config();
 
 export async function sendDataToBackend(
-  data: SensorData,
-  cropId: number
+  data: SensorData | null,
+  cropId: number | null
 ): Promise<void> {
+  if (!data) {
+    console.warn("sendDataToBackend: No hay datos del sensor aún.");
+    return;
+  }
+
+  if (!cropId) {
+    console.warn("sendDataToBackend: No hay cropId definido.");
+    return;
+  }
+
   try {
-    // Body que requiere el backend
-    const payload = {
-      temperature: data.temperature,
-      humidity: data.humidity,
-      tankCurrentVolume: data.volume
-    };
+    const response = await axios.post(
+      `${cropIotEndpoint(cropId)}/sensor-data`,
+      data
+    );
 
-    await axios.put(cropIotEndpoint(cropId), payload);
-
-    console.log("Datos enviados correctamente al backend (PUT /crops/{id}/iot)");
-  } catch (error) {
-    console.error("Error enviando datos al backend:", error);
+    console.log("Datos enviados correctamente al backend");
+  } catch (err) {
+    console.error("Error enviando datos al backend:", err);
   }
 }
 
- 
+export async function getThresholdsFromBackend(
+  cropId: number
+): Promise<any | null> {
+  try {
+    const response = await axios.get(thresholdsEndpoint(cropId));
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo thresholds del backend:", error);
+    return null;
+  }
+}
