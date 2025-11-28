@@ -20,8 +20,8 @@ export async function sendDataToBackend(
   }
 
   try {
-    const response = await axios.post(
-      `${cropIotEndpoint(cropId)}/sensor-data`,
+    const response = await axios.put(
+      cropIotEndpoint(cropId),
       data
     );
 

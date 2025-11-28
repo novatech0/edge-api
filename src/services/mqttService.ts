@@ -28,7 +28,7 @@ export class MqttService {
   private onMessage = async (_topic: string, message: Buffer) => {
     try {
       const data = JSON.parse(message.toString());
-
+      if (data.sender == "edge") return;
       if (data.id) this.latestCropId = Number(data.id);
 
       this.latestData = {
@@ -47,8 +47,10 @@ export class MqttService {
 
       const thresholds = await getThresholdsFromBackend(this.latestCropId);
 
-      if (thresholds) {
+      if (thresholds && this.latestCropId) {
         const formatted = {
+          sender: "edge",
+          id: this.latestCropId,
           temperature_max: thresholds.temperatureMaxThreshold,
           humidity_min: thresholds.humidityMinThreshold,
           max_volume: thresholds.tankMaxVolume,
@@ -57,10 +59,7 @@ export class MqttService {
 
         console.log("Sending thresholds to Wokwi:", formatted);
 
-        this.client.publish(
-          `${MQTT_TOPIC}/config`,
-          JSON.stringify(formatted)
-        );
+        this.client.publish(MQTT_TOPIC,JSON.stringify(formatted));
       }
 
     } catch (error) {
