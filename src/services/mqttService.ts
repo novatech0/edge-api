@@ -2,6 +2,7 @@ import mqtt, { MqttClient } from "mqtt";
 import dotenv from "dotenv";
 import { MQTT_BROKER, MQTT_TOPIC } from "../constants/mqtt";
 import { SensorData } from "../types/sensor";
+import { SendSensorData } from "../types/sendSensorData";
 import { sendDataToBackend, getThresholdsFromBackend } from "./backendService";
 
 dotenv.config();
@@ -43,7 +44,20 @@ export class MqttService {
         return;
       }
 
-      await sendDataToBackend(this.latestData, this.latestCropId);
+      if (!this.latestData) {
+        console.error("No latest data available");
+        return;
+      }
+      
+
+      const sendData: SendSensorData = {
+        temperature: this.latestData.temperature,
+        humidity: this.latestData.humidity,
+        tankCurrentVolume: this.latestData.volume,
+        timestamp: this.latestData.timestamp,
+      };
+
+      await sendDataToBackend(sendData, this.latestCropId);
 
       const thresholds = await getThresholdsFromBackend(this.latestCropId);
 

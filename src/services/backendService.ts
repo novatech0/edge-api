@@ -1,12 +1,12 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import { cropIotEndpoint, thresholdsEndpoint } from "../constants/backend";
-import { SensorData } from "../types/sensor";
+import { SendSensorData } from "../types/sendSensorData";
 
 dotenv.config();
 
 export async function sendDataToBackend(
-  data: SensorData | null,
+  data: SendSensorData | null,
   cropId: number | null
 ): Promise<void> {
   if (!data) {
